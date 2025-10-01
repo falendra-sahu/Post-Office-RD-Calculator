@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post Office RD Calculator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for a modern and sleek look */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Using a soft blue-gray background for visual appeal */
+            background-color: #eef2f6; 
+        }
+        .card {
+            /* Deeper shadow for better lift */
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15); 
+            transition: transform 0.3s ease-in-out;
+        }
+        .input-field {
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .input-field:focus {
+            border-color: #10b981; /* Teal focus color */
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.4);
+        }
+        .result-box {
+            /* Soft pastel background for results */
+            background-color: #f0fdf4; 
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 flex items-center justify-center">
+
+    <div class="w-full max-w-4xl">
+        <!-- Copy Feedback Message -->
+        <div id="copyFeedback" class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-xl shadow-xl opacity-0 transition-opacity duration-300 pointer-events-none z-50 font-semibold">
+            Results copied to clipboard!
+        </div>
+        
+        <!-- HEADING SIZE REDUCED AND TEXT SHORTENED -->
+        <h1 class="text-3xl sm:text-2xl font-extrabold text-gray-900 mb-8 text-center tracking-tight">
+            Post Office RD Calculator
+        </h1>
+
+        <div class="card bg-white p-6 md:p-10 rounded-2xl grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+            <!-- Input Section -->
+            <div class="space-y-6">
+                <h2 class="text-xl font-semibold text-teal-600 border-b-2 pb-2 border-teal-100">Deposit Details</h2>
+
+                <!-- Custom Date Dropdowns (Day/Month/Year) -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Account Opening Date (Day/Month/Year)</label>
+                    <div class="flex space-x-2">
+                        <!-- Note: The onchange event now calls updateInterestRateAndCalculate() -->
+                        <select id="daySelect" class="input-field px-2 py-2 border border-gray-300 rounded-lg focus:outline-none w-1/4" onchange="updateInterestRateAndCalculate()">
+                            <option value="">Day</option>
+                        </select>
+                        <select id="monthSelect" class="input-field px-2 py-2 border border-gray-300 rounded-lg focus:outline-none w-1/4" onchange="updateInterestRateAndCalculate()">
+                            <option value="">Month</option>
+                        </select>
+                        <select id="yearSelect" class="input-field px-2 py-2 border border-gray-300 rounded-lg focus:outline-none w-1/2" onchange="updateInterestRateAndCalculate()">
+                            <option value="">Year</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="denomination" class="block text-sm font-medium text-gray-700 mb-1">Installment (Monthly Deposit in ₹)</label>
+                    <!-- Denomination change still triggers the standard calculation -->
+                    <input type="number" id="denomination" value="" placeholder="Ex: 1000" min="10" class="input-field w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" oninput="calculateRD()">
+                </div>
+
+                <!-- Interest Rate Input with Info Button (i) -->
+                <div>
+                    <label for="interestRate" class="block text-sm font-medium text-gray-700 mb-1">Current Interest Rate (Annual %)</label>
+                    <div class="flex items-center space-x-2">
+                        <input type="number" id="interestRate" placeholder="Auto-filled or Enter Manually" min="0" step="0.1" class="input-field w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none bg-yellow-50" oninput="calculateRD()">
+                        <!-- Info Button (i) to open the modal -->
+                        <button onclick="openRateModal()" class="flex-shrink-0 p-2 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition duration-150 transform hover:scale-105" title="View Historical Interest Rates">
+                            <!-- SVG Icon for 'i' -->
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.027m0 0 1.94 2.155 1.76-2.505.795-1.52m-3.999-.75h.001m.75 3.75h.001m-2.25 0h.001m-2.25 0h.001m13.5-3.75v3.375c0 1.066-.317 2.054-.863 2.895l-1.4 2.25c-.417.67-.998 1.15-1.63 1.344a6.793 6.793 0 0 1-1.696.06c-1.334-.08-2.583-.56-3.617-1.488l-1.455-1.334c-.958-.877-1.577-2.074-1.602-3.328A6.79 6.79 0 0 1 3.75 6.094V6.75h16.5m-1.5-4.5h.008v.008H20.25Z" />
+                            </svg>
+                        </button>
+                    </div>
+                    <p id="rateNote" class="text-xs text-yellow-800 mt-1">
+                        Rate is automatically filled based on the selected opening date.
+                    </p>
+                </div>
+
+                <!-- Buttons Size Reduced -->
+                <div class="flex justify-end pt-4 space-x-4">
+                    <button onclick="copyResults()" class="px-4 py-1.5 text-sm bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-150 transform hover:scale-[1.02]" id="copyButton">
+                        Copy Results
+                    </button>
+                    <button onclick="clearForm()" class="px-4 py-1.5 text-sm bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 transition duration-150 transform hover:scale-[1.02]">
+                        Clear All
+                    </button>
+                </div>
+            </div>
+
+            <!-- Result Section -->
+            <div id="results" class="space-y-8 lg:pt-10">
+                <h2 class="sr-only">Calculated Results</h2>
+                
+                <!-- Date Results -->
+                <div class="bg-indigo-100 p-4 rounded-xl">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-medium text-gray-700">Maturity Date (5 Years)</span>
+                        <span id="maturityDate" class="text-base font-bold text-indigo-800">--</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium text-gray-700">Pre-Maturity Date (3 Years)</span>
+                        <span id="preMaturityDate" class="text-base font-bold text-indigo-800">--</span>
+                    </div>
+                </div>
+
+                <!-- Maturity Results -->
+                <div class="result-box p-6 rounded-xl border border-teal-300">
+                    <h3 class="text-base font-bold text-teal-800 mb-4 border-b pb-2 border-teal-200">Maturity (5 Years)</h3>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-700">Total Deposited Amount:</span>
+                            <span id="maturityPrincipal" class="text-base font-medium text-gray-900">--</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-700">Interest Earned:</span>
+                            <span id="maturityInterest" class="text-base font-medium text-green-700">--</span>
+                        </div>
+                        <div class="flex justify-between pt-2 border-t border-teal-200">
+                            <span class="text-base font-bold text-teal-900">Maturity Amount (Total):</span>
+                            <span id="maturityAmount" class="text-base font-bold text-teal-900">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pre-Maturity Results (3 Years) -->
+                <div class="result-box p-6 rounded-xl border border-orange-300 bg-orange-50">
+                    <h3 class="text-base font-bold text-orange-800 mb-4 border-b pb-2 border-orange-200">Pre-Maturity (3 Years, @ 4% Savings Rate)</h3>
+                    <div class="space-y-2">
+                         <div class="flex justify-between">
+                            <span class="text-sm text-gray-700">Total Deposited Amount:</span>
+                            <span id="preMaturityPrincipal" class="text-base font-medium text-gray-900">--</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-700">Interest Earned:</span>
+                            <span id="preMaturityInterest" class="text-base font-medium text-green-700">--</span>
+                        </div>
+                        <div class="flex justify-between pt-2 border-t border-orange-200">
+                            <span class="text-base font-bold text-orange-900">Pre-Maturity Amount (Total):</span>
+                            <span id="preMaturityAmount" class="text-base font-bold text-orange-900">--</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Average Interest -->
+                 <div class="bg-gray-100 p-4 rounded-xl space-y-2">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium text-gray-600">Avg. Monthly Interest (Over 5 Years):</span>
+                        <span id="avgInterestMonth" class="text-base font-bold text-green-700">--</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium text-gray-600">Avg. Yearly Interest (Over 5 Years):</span>
+                        <span id="avgInterestYear" class="text-base font-bold text-green-700">--</span>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <p class="text-center text-xs text-gray-500 mt-6">
+            Disclaimer: This calculator uses the Future Value of Annuity Due formula for an estimate assuming monthly compounding. The actual Post Office RD calculation follows quarterly compounding and may result in slight variation. The official 4% Savings Account rate is used in the Pre-Maturity calculation. Rates are based on historical data up to March 2024.
+        </p>
+
+    </div>
+
+    <!-- ---------------------------------------------------- -->
+    <!-- Historical Interest Rate Modal (Popup) Structure -->
+    <!-- ---------------------------------------------------- -->
+    <div id="rateModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 transition-opacity duration-300 opacity-0 pointer-events-none">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl m-4 transform scale-95 transition-transform duration-300">
+            <!-- Modal Header -->
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
+                <h3 class="text-xl font-bold text-gray-800">Historical RD Interest Rates (1981-Present)</h3>
+                <button onclick="closeRateModal()" class="text-gray-400 hover:text-gray-600 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <!-- Modal Body: Table will be injected here -->
+            <div class="p-6 max-h-[70vh] overflow-y-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50 sticky top-0">
+                        <tr>
+                            <th class="px-3 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">From</th>
+                            <th class="px-3 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">To</th>
+                            <th class="px-3 py-3 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Rate (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rateTableBody" class="bg-white divide-y divide-gray-200 text-sm">
+                        <!-- Table rows generated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-gray-200 text-right">
+                <button onclick="closeRateModal()" class="px-4 py-2 text-sm font-medium rounded-lg bg-teal-600 text-white hover:bg-teal-700 transition">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // Month names for display (0-indexed)
+        const monthNames = [
+            "January", "February", "March", "April", "May", "June", 
+            "July", "August", "September", "October", "November", "December"
+        ];
+        
+        // --- 1. HISTORICAL INTEREST RATE DATA ---
+        // Source: Based on user-provided historical Post Office RD interest rates.
+        const RD_RATES = [
+            { from: "01-04-1981", to: "31-03-1982", rate: 9.00 },
+            { from: "01-04-1982", to: "28-02-1983", rate: 10.30 },
+            { from: "01-03-1983", to: "31-03-1987", rate: 11.30 },
+            { from: "01-04-1987", to: "31-03-1991", rate: 11.00 },
+            { from: "01-04-1991", to: "30-09-1991", rate: 11.50 },
+            { from: "01-10-1991", to: "01-09-1993", rate: 13.50 },
+            { from: "02-09-1993", to: "31-12-1998", rate: 12.50 },
+            { from: "01-01-1999", to: "31-12-1999", rate: 11.50 },
+            { from: "01-01-2000", to: "14-01-2000", rate: 11.50 },
+            { from: "15-01-2000", to: "31-01-2000", rate: 10.50 },
+            { from: "01-02-2000", to: "28-02-2001", rate: 10.50 },
+            { from: "01-03-2001", to: "28-02-2002", rate: 9.00 },
+            { from: "01-03-2002", to: "28-02-2003", rate: 8.50 },
+            { from: "01-03-2003", to: "01-08-2004", rate: 7.50 },
+            { from: "02-08-2004", to: "30-11-2011", rate: 7.50 },
+            { from: "01-12-2011", to: "31-03-2012", rate: 8.00 },
+            { from: "01-04-2012", to: "31-03-2013", rate: 8.40 },
+            { from: "01-04-2013", to: "31-03-2014", rate: 8.30 },
+            { from: "01-04-2014", to: "17-11-2014", rate: 8.40 },
+            { from: "18-11-2014", to: "20-01-2015", rate: 8.40 },
+            { from: "21-01-2015", to: "31-03-2015", rate: 8.40 },
+            { from: "01-04-2015", to: "31-03-2016", rate: 8.40 },
+            { from: "01-04-2016", to: "30-09-2016", rate: 7.40 },
+            { from: "01-10-2016", to: "31-03-2017", rate: 7.30 },
+            { from: "01-04-2017", to: "30-06-2017", rate: 7.20 },
+            { from: "01-07-2017", to: "31-12-2017", rate: 7.10 },
+            { from: "01-01-2018", to: "30-09-2018", rate: 6.90 },
+            { from: "01-10-2018", to: "31-12-2018", rate: 7.30 },
+            { from: "01-01-2019", to: "31-03-2019", rate: 7.30 },
+            { from: "01-04-2019", to: "30-06-2019", rate: 7.30 },
+            { from: "01-07-2019", to: "30-09-2019", rate: 7.20 },
+            { from: "01-10-2019", to: "31-12-2019", rate: 7.20 },
+            { from: "01-01-2020", to: "31-03-2020", rate: 7.20 },
+            { from: "01-04-2020", to: "30-09-2022", rate: 5.80 },
+            { from: "01-10-2022", to: "31-12-2022", rate: 5.80 },
+            { from: "01-01-2023", to: "31-03-2023", rate: 5.80 },
+            { from: "01-04-2023", to: "30-06-2023", rate: 6.20 },
+            { from: "01-07-2023", to: "30-09-2023", rate: 6.50 },
+            { from: "01-10-2023", to: "31-03-2024", rate: 6.70 }
+            // Note: For dates after 31-03-2024, the calculator will use the latest known rate (6.70).
+        ];
+
+        // Helper function to convert "DD-MM-YYYY" string to a Date object for comparison
+        function parseDate(dateStr) {
+            const parts = dateStr.split('-');
+            // Date constructor uses (year, monthIndex, day)
+            // Month is 1-indexed in string, 0-indexed in Date constructor (so parts[1] - 1)
+            // The time is set to midnight (00:00:00) for clean comparison.
+            return new Date(parts[2], parts[1] - 1, parts[0]);
+        }
+        
+        // Function to find the applicable interest rate for a given date
+        function getRateForDate(selectedDate) {
+            if (!selectedDate || isNaN(selectedDate.getTime())) return null;
+
+            // Iterate through the historical rates
+            for (const range of RD_RATES) {
+                const startDate = parseDate(range.from);
+                const endDate = parseDate(range.to);
+
+                // Check if the selected date falls inclusively within the range
+                if (selectedDate >= startDate && selectedDate <= endDate) {
+                    return range.rate;
+                }
+            }
+            
+            // Handle dates after the last known rate (e.g., current/future dates after 31-03-2024)
+            // If the selected date is after the last recorded rate, use the most recent one (6.70)
+            const lastKnownRate = RD_RATES[RD_RATES.length - 1];
+            const lastDate = parseDate(lastKnownRate.to);
+
+            if (selectedDate > lastDate) {
+                 // For current/future quarter dates beyond the list, we assume the latest rate
+                 return lastKnownRate.rate; // Currently 6.70%
+            }
+
+            return null; // Should not happen for dates within the RD_RATES range
+        }
+
+
+        // Function to populate date dropdowns
+        function populateDateDropdowns() {
+            const daySelect = document.getElementById('daySelect');
+            const monthSelect = document.getElementById('monthSelect');
+            const yearSelect = document.getElementById('yearSelect');
+            
+            // 1. Day Dropdown (1 to 31)
+            for (let i = 1; i <= 31; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = i;
+                daySelect.appendChild(option);
+            }
+
+            // 2. Month Dropdown (1 to 12)
+            monthNames.forEach((name, index) => {
+                const option = document.createElement('option');
+                // Value is 1-indexed (1 for Jan, 12 for Dec)
+                option.value = index + 1; 
+                option.textContent = name;
+                monthSelect.appendChild(option);
+            });
+
+            // 3. Year Dropdown (2030 down to 2000)
+            const startYear = 2000;
+            const endYear = 2030;
+            
+            // Loop from endYear down to startYear (descending)
+            for (let year = endYear; year >= startYear; year--) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearSelect.appendChild(option);
+            }
+        }
+
+        // --- 2. MODAL LOGIC FOR HISTORICAL RATES ---
+
+        // Function to populate the table inside the modal
+        function populateRateTable() {
+            const tableBody = document.getElementById('rateTableBody');
+            tableBody.innerHTML = ''; // Clear previous content
+
+            // We iterate in reverse to show the latest rates first (top of table)
+            // This makes the table more relevant for modern use cases.
+            [...RD_RATES].reverse().forEach(rateItem => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-3 py-2 whitespace-nowrap">${rateItem.from}</td>
+                    <td class="px-3 py-2 whitespace-nowrap">${rateItem.to}</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-right font-semibold text-teal-700">${rateItem.rate.toFixed(2)}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Function to open the modal (Rate Table)
+        function openRateModal() {
+            const modal = document.getElementById('rateModal');
+            // Show modal using Tailwind classes for smooth transition
+            modal.classList.remove('pointer-events-none', 'opacity-0');
+            modal.classList.add('opacity-100');
+            // Scale effect for the content box
+            document.querySelector('#rateModal > div').classList.remove('scale-95');
+            document.querySelector('#rateModal > div').classList.add('scale-100');
+        }
+
+        // Function to close the modal (Rate Table)
+        function closeRateModal() {
+            const modal = document.getElementById('rateModal');
+            // Hide modal using Tailwind classes for smooth transition
+            modal.classList.remove('opacity-100');
+            modal.classList.add('opacity-0');
+            // Scale effect for the content box
+            document.querySelector('#rateModal > div').classList.remove('scale-100');
+            document.querySelector('#rateModal > div').classList.add('scale-95');
+
+            // Wait for transition to finish before disabling pointer events
+            setTimeout(() => {
+                modal.classList.add('pointer-events-none');
+            }, 300); 
+        }
+
+        // --- 3. INTEGRATION AND CALCULATION FUNCTION ---
+        // This function finds the rate and then performs the calculation.
+        function updateInterestRateAndCalculate() {
+            const day = document.getElementById('daySelect').value;
+            const month = document.getElementById('monthSelect').value; // 1-12
+            const year = document.getElementById('yearSelect').value;
+            const rateInput = document.getElementById('interestRate');
+
+            if (day && month && year) {
+                // Create Date object for rate lookup
+                const selectedDate = new Date(year, month - 1, day);
+                const rate = getRateForDate(selectedDate);
+                
+                if (rate !== null) {
+                    rateInput.value = rate.toFixed(2); // Auto-fill the rate input
+                } else {
+                    // Fallback for dates outside the supported range (before 1981, etc.)
+                    rateInput.value = "";
+                    document.getElementById('rateNote').textContent = "Could not find historical rate. Please enter manually.";
+                }
+            } else {
+                // Clear rate if date selection is incomplete
+                rateInput.value = ""; 
+                document.getElementById('rateNote').textContent = "Rate is automatically filled based on the selected opening date.";
+            }
+
+            // Always run the main calculation to update results based on the new rate
+            calculateRD();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Populating dropdowns with data
+            populateDateDropdowns();
+            // Populate the rate table in the modal once on load
+            populateRateTable(); 
+            // Clearing results initially
+            calculateRD(); 
+        });
+
+        // Function to format numbers as Indian Rupee currency
+        const formatter = new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        });
+        
+        // Function to show feedback message for copy action
+        function showFeedback(message) {
+            const feedback = document.getElementById('copyFeedback');
+            feedback.textContent = message;
+            feedback.classList.remove('bg-green-600', 'bg-red-600');
+            
+            if (message.includes("copied")) {
+                 feedback.classList.add('bg-green-600');
+            } else {
+                 feedback.classList.add('bg-red-600');
+            }
+            
+            feedback.classList.remove('opacity-0');
+            feedback.classList.add('opacity-100');
+
+            setTimeout(() => {
+                feedback.classList.remove('opacity-100');
+                feedback.classList.add('opacity-0');
+            }, 2000);
+        }
+
+        // Function to copy results
+        function copyResults() {
+            // Check if results are valid (if principal is calculated)
+            const maturityPrincipalText = document.getElementById('maturityPrincipal').textContent;
+            if (maturityPrincipalText === '--') {
+                showFeedback("Please enter all details first!");
+                return;
+            }
+
+            // 1. Gather all data points
+            const day = document.getElementById('daySelect').value;
+            const monthIndex = parseInt(document.getElementById('monthSelect').value) - 1;
+            const year = document.getElementById('yearSelect').value;
+            
+            const monthName = monthNames[monthIndex] || 'N/A';
+            const selectedDateText = `${day} ${monthName}, ${year}`;
+
+            const denomination = document.getElementById('denomination').value;
+            const rate = document.getElementById('interestRate').value;
+
+            // 2. Gather result text (use textContent)
+            const maturityDate = document.getElementById('maturityDate').textContent;
+            const preMaturityDate = document.getElementById('preMaturityDate').textContent;
+            const maturityPrincipal = document.getElementById('maturityPrincipal').textContent;
+            const maturityInterest = document.getElementById('maturityInterest').textContent;
+            const maturityAmount = document.getElementById('maturityAmount').textContent;
+            const preMaturityPrincipal = document.getElementById('preMaturityPrincipal').textContent;
+            const preMaturityInterest = document.getElementById('preMaturityInterest').textContent;
+            const preMaturityAmount = document.getElementById('preMaturityAmount').textContent;
+            const avgInterestMonth = document.getElementById('avgInterestMonth').textContent;
+            const avgInterestYear = document.getElementById('avgInterestYear').textContent;
+            
+            // 3. Format the data clearly in English
+            const resultsText = `
+--- Post Office RD Calculation Summary ---
+Deposit Details:
+- Monthly Deposit (₹): ${denomination}
+- Annual Rate (%): ${rate} (Based on historical rate for opening date)
+- Opening Date: ${selectedDateText}
+-----------------------------------------
+
+Maturity (5 Years):
+- Maturity Date: ${maturityDate}
+- Total Deposited: ${maturityPrincipal}
+- Interest Earned: ${maturityInterest}
+- Total Maturity Amount: ${maturityAmount}
+
+Pre-Maturity (3 Years):
+- Pre-Maturity Date: ${preMaturityDate}
+- Total Deposited: ${preMaturityPrincipal}
+- Interest Earned: ${preMaturityInterest}
+- Total Amount: ${preMaturityAmount}
+
+Averages (Over 5 Years):
+- Avg. Monthly Interest: ${avgInterestMonth}
+- Avg. Yearly Interest: ${avgInterestYear}
+
+*Note: Based on monthly compounding approximation. Pre-Maturity uses the 4% savings rate.*
+            `.trim();
+
+            // 4. Copy to clipboard using the robust method
+            const textarea = document.createElement('textarea');
+            textarea.value = resultsText;
+            textarea.style.position = 'fixed'; 
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showFeedback("Results copied to clipboard!");
+                } else {
+                    showFeedback("Copy failed. Try manually.");
+                }
+            } catch (err) {
+                showFeedback("Copy failed. Error occurred.");
+            } finally {
+                document.body.removeChild(textarea);
+            }
+        }
+
+
+        // Function to clear all inputs and results
+        function clearForm() {
+            // Reset inputs
+            document.getElementById('daySelect').value = "";
+            document.getElementById('monthSelect').value = "";
+            document.getElementById('yearSelect').value = "";
+            document.getElementById('denomination').value = "";
+            document.getElementById('interestRate').value = "";
+            document.getElementById('rateNote').textContent = "Rate is automatically filled based on the selected opening date.";
+            
+            // Recalculate, which will clear the results since inputs are now empty
+            calculateRD();
+
+            // Optionally give focus back to the first input for user convenience
+            document.getElementById('daySelect').focus();
+        }
+
+
+        // Function to calculate the Recurring Deposit details
+        function calculateRD() {
+            // 1. Get Inputs from Dropdowns and Inputs
+            const denomination = parseFloat(document.getElementById('denomination').value);
+            const rate = parseFloat(document.getElementById('interestRate').value);
+            
+            const day = document.getElementById('daySelect').value;
+            const month = document.getElementById('monthSelect').value; // 1-12
+            const year = document.getElementById('yearSelect').value;
+            
+            // Basic validation: Check if all necessary inputs are selected/entered
+            if (isNaN(denomination) || denomination <= 0 || isNaN(rate) || rate <= 0 || !day || !month || !year) {
+                // Clear outputs if inputs are invalid or missing
+                document.getElementById('maturityDate').textContent = '--';
+                document.getElementById('preMaturityDate').textContent = '--';
+                document.getElementById('maturityPrincipal').textContent = '--';
+                document.getElementById('maturityInterest').textContent = '--';
+                document.getElementById('maturityAmount').textContent = '--';
+                document.getElementById('preMaturityPrincipal').textContent = '--';
+                document.getElementById('preMaturityInterest').textContent = '--';
+                document.getElementById('preMaturityAmount').textContent = '--';
+                document.getElementById('avgInterestMonth').textContent = '--';
+                document.getElementById('avgInterestYear').textContent = '--';
+                return;
+            }
+
+            // Create Date object: Month is 0-indexed in JavaScript
+            const openingDate = new Date(year, month - 1, day);
+
+
+            // Monthly interest rate (i) and compounding frequency for 5-Year RD
+            // Note: This uses monthly compounding as an approximation, as Post Office RD uses quarterly compounding.
+            const monthlyRate = rate / 100 / 12; // r/12
+            const monthlyPayment = denomination;
+
+            // --- DATE CALCULATIONS ---
+            
+            // Maturity Date: 5 Years (60 months)
+            const maturityDate = new Date(openingDate);
+            maturityDate.setFullYear(openingDate.getFullYear() + 5);
+
+            // Pre Maturity Date: 3 Years (36 months)
+            const preMaturityDate = new Date(openingDate);
+            preMaturityDate.setFullYear(openingDate.getFullYear() + 3);
+
+
+            // --- FINANCIAL CALCULATIONS ---
+
+            // **1. Maturity (5 Years / 60 months) - Uses Input Rate**
+            const termMaturity = 60; // 5 years * 12 months
+            const principalMaturity = monthlyPayment * termMaturity;
+
+            // Future Value of Annuity Due (Payments at start of the period)
+            // A = P * [((1 + i)^n - 1) / i] * (1 + i)
+            const fvFactorMaturity = (Math.pow(1 + monthlyRate, termMaturity) - 1) / monthlyRate;
+            const maturityAmount = monthlyPayment * fvFactorMaturity * (1 + monthlyRate);
+            
+            const maturityInterest = maturityAmount - principalMaturity;
+            
+            // **2. Pre-Maturity (3 Years / 36 months) - Uses 4% Savings Rate**
+            const termPreMaturity = 36; // 3 years * 12 months (minimum for closure)
+            const principalPreMaturity = monthlyPayment * termPreMaturity;
+            
+            // Official PO rule: If closed prematurely after 3 years, the interest rate of the PO Savings Account (currently 4%) applies.
+            const savingsRate = 4; // 4% annual rate
+            const monthlySavingsRate = savingsRate / 100 / 12; // Savings rate compounded monthly for formula consistency
+            
+            // Future Value for 3 years using the 4% Savings Account Rate
+            const fvFactorPreMaturity = (Math.pow(1 + monthlySavingsRate, termPreMaturity) - 1) / monthlySavingsRate;
+            const preMaturityAmount = monthlyPayment * fvFactorPreMaturity * (1 + monthlySavingsRate); 
+            
+            const preMaturityInterest = preMaturityAmount - principalPreMaturity;
+
+
+            // **3. Average Interest**
+            const avgInterestMonth = maturityInterest / termMaturity;
+            const avgInterestYear = maturityInterest / 5; // Over 5 year period
+
+
+            // --- DISPLAY RESULTS ---
+            
+            // Date Display
+            document.getElementById('maturityDate').textContent = maturityDate.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+            document.getElementById('preMaturityDate').textContent = preMaturityDate.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+
+            // Maturity Display
+            document.getElementById('maturityAmount').textContent = formatter.format(maturityAmount);
+            document.getElementById('maturityPrincipal').textContent = formatter.format(principalMaturity);
+            document.getElementById('maturityInterest').textContent = formatter.format(maturityInterest);
+            
+            // Pre-Maturity Display
+            document.getElementById('preMaturityAmount').textContent = formatter.format(preMaturityAmount);
+            document.getElementById('preMaturityPrincipal').textContent = formatter.format(principalPreMaturity);
+            document.getElementById('preMaturityInterest').textContent = formatter.format(preMaturityInterest);
+
+            // Average Interest Display
+            document.getElementById('avgInterestMonth').textContent = formatter.format(avgInterestMonth);
+            document.getElementById('avgInterestYear').textContent = formatter.format(avgInterestYear);
+        }
+    </script>
+</body>
+</html>
