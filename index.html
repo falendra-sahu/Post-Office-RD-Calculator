@@ -192,7 +192,7 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="label-text">Monthly Installment</label>
-                        <input type="text" id="denomination" placeholder="₹ 1,000" class="input-field font-semibold" oninput="formatCurrencyInput(this)">
+                        <input type="text" id="denomination" placeholder="₹ 1,000" class="input-field font-semibold" inputmode="numeric" oninput="formatCurrencyInput(this)">
                     </div>
                     <div>
                         <label class="label-text">Interest Rate (%)</label>
@@ -311,11 +311,15 @@
 
         // Thousand separator for input
         function formatCurrencyInput(input) {
-            let val = input.value.replace(/,/g, '').replace(/\D/g, '');
+            let val = input.value.replace(/,/g, '');
             if (val === '') {
                 input.value = '';
-            } else {
+            } else if (/^\d+$/.test(val)) {
                 input.value = Number(val).toLocaleString('en-IN');
+            } else {
+                const cursorPos = input.selectionStart;
+                input.value = input.value.replace(/[^\d]/g, '');
+                input.setSelectionRange(cursorPos - 1, cursorPos - 1);
             }
             calculateRD();
         }
