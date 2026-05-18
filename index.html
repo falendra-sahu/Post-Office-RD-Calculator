@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -113,6 +114,28 @@
             opacity: 0;
             transition: opacity 0.3s;
             z-index: 1000;
+        }
+
+        @media (max-width: 767px) {
+            body {
+                padding: 0 !important;
+                min-height: 100vh !important;
+                height: 100vh !important;
+                overflow: hidden !important;
+            }
+            .app-container {
+                max-width: 100% !important;
+                width: 100% !important;
+                height: 100vh !important;
+                border: none !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch;
+            }
+            .app-container > .p-6 {
+                padding: 16px !important;
+            }
         }
     </style>
 </head>
